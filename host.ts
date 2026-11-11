@@ -35,6 +35,17 @@ const DEFAULT_IDLE_DISCONNECT_MS = 10 * 60_000;
 const REPEATED_TEXT_MIN = 24;
 const STRUCTURED_TEXT_LIMIT = 200_000;
 const INSTALL_TAIL_LINES = 80;
+/**
+ * Windows OpenSSH and BB host services run in Session 0, while the Cua
+ * daemon must run in the signed-in user's interactive session. Proxy MCP
+ * through the per-user named pipe so the caller does not try to own a
+ * Session-0 desktop.
+ */
+const WINDOWS_DAEMON_SOCKET = String.raw`\\.\pipe\cua-driver`;
+
+export function mcpArgs(platform: NodeJS.Platform): string[] {
+  return platform === "win32" ? ["mcp", "--socket", WINDOWS_DAEMON_SOCKET] : ["mcp"];
+}
 
 
 export interface ExecResult {
@@ -385,7 +396,7 @@ export function createCuaHostEntry(deps: HostDependencies) {
         );
       }
       await ensureDaemonGrants(binary, grants);
-      const child = deps.spawnMcp(binary, ["mcp"]);
+      const child = deps.spawnMcp(binary, mcpArgs(deps.platform));
       const next = new McpStdioClient(child);
       next.onClose((reason) => {
         // A client that is no longer current was ended by disconnect(), which has already reported it.

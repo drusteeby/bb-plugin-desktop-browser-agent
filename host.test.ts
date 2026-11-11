@@ -5,6 +5,7 @@ import {
   candidateBinaryPaths,
   createCuaHostEntry,
   mapContent,
+  mcpArgs,
   parseDaemonGrants,
   parsePermissions,
   parseUpdateCheck,
@@ -191,6 +192,14 @@ describe("candidateBinaryPaths", () => {
     expect(candidateBinaryPaths({ platform: "win32", env: { PATH: "C:\\x", LOCALAPPDATA: "C:\\L" }, homeDir: "C:\\U" })).toContain(
       "C:\\L\\Programs\\Cua\\cua-driver\\bin\\cua-driver.exe",
     );
+  });
+});
+
+describe("mcpArgs", () => {
+  it("proxies Windows through the interactive user's named pipe", () => {
+    expect(mcpArgs("win32")).toEqual(["mcp", "--socket", String.raw`\\.\pipe\cua-driver`]);
+    expect(mcpArgs("darwin")).toEqual(["mcp"]);
+    expect(mcpArgs("linux")).toEqual(["mcp"]);
   });
 });
 
